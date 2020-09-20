@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>Language/Location Data</title>
+        <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+        <script type="text/javascript">
+            google.charts.load("current", {packages:["corechart"]});
+            google.charts.setOnLoadCallback(draw_chart);
+            function draw_chart() {
+                var data = google.visualization.arrayToDataTable({{ data }});
+
+                var options = {
+                    title: 'My Daily Activities',
+                    curveType: 'function',
+                    legend: { position: 'bottom' }
+                };
+
+                var chart = new google.visualization.LineChart(document.getElementById('curve_chart'));
+                chart.draw(data, options)
+            }
+        </script>
+    </head>
+    <body>
+        <div style="margin: 10px 0 0 10px; width: 1000px">
+            <h3>Show data on Google Pie Chart using Python Flask</h3>
+            <div id="curve_chart" style="width: 900px; height: 500px;"></div>
+        </div>
+    </body>
+</html>

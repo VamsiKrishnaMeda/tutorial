@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+
+{% block header %}
+    <h1>{% block title %}Practice{% endblock %}</h1>
+{% endblock %}
+
+{% block content %}
+    <div class="row">
+        <div class="column" style="width: 25%">
+            <form method="POST">
+                <label for="submit">Start</label>
+                <input name="submit" id="submit" type="submit" value="Run">
+            </form>
+        </div>
+        {% if data %}
+            <div class="column" style="width: 50%;">
+                <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+                <script type="text/javascript">
+                    google.charts.load("current", {packages:["line"]});
+                    google.charts.setOnLoadCallback(draw_chart);
+                    function draw_chart() {
+                    var data = google.visualization.arrayToDataTable([
+                        ['Time', 'Coronavirus', 'Covid-19', 'Covid19'],
+                        ['2020/9/17 12:00', 2193, 1576, 1071],
+                        ['2020/9/17 13:00', 3346, 2754, 1739],
+                        ['2020/9/15 23:00', 1951, 1876, 2086]
+                    ]);
+
+                        var options = {
+                            chart: {
+                                title: 'practice Keyword analysis',
+                                curveType: 'function'
+                            },
+                            width: 900,
+                            height: 500
+                        };
+
+                        var chart = new google.charts.Line(document.getElementById('linechart_material'));
+                        chart.draw(data, google.charts.Line.convertOptions(options));
+                    }
+                </script>
+                <div style="margin: auto; width: 690px;">
+                    <div id="linechart_material" style="width: auto; height: 500px;"></div>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+{% endblock %}

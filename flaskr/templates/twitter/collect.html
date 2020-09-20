@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+
+{% block header %}
+    <h1>{% block title %}New Collection{% endblock %}</h1>
+{% endblock %}
+
+{% block content %}
+    <form method="POST">
+        <label for="keywords">Keywords</label>
+        <textarea name="keywords" id="keywords">{{ request.form['keywords'] }}</textarea>
+        <label for="start_time">Start Time</label>
+        <input name="start_time" id="start_time" value="{{ request.form['start_time'] }}" required>
+        <label for="duration">Duration (in minutes)</label>
+        <input name="duration" id="duration" value="{{ request.form['duration'] }}" required>
+        <label for="file_name">File Name</label>
+        <input name="file_name" id="file_name" value="{{ request.form['file_name'] }}">
+        <label for="summary_file_name">Summary File Name</label>
+        <input name="summary_file_name" id="summary_file_name" value="{{ request.form['summary_file_name'] }}">
+        <input type="submit" value="Start">
+    </form>
+{% endblock %}

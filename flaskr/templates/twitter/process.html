@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+
+{% block header %}
+    <meta charset="utf-8">
+    <h1>{% block title %}Analytics{% endblock %}</h1>
+    <link rel="stylesheet" href="{{ url_for('static', filename='process.css') }}">
+{% endblock %}
+
+{% block content %}
+    <div class="row">
+        <div class="column" style="width: 25%">
+            <form method="POST">
+                <label for="collection">Select Collection</label>
+                <select name="collection_name">
+                    {% for collection_name in collection_list %}
+                        <option value="{{ collection_name }}">{{ collection_name }}</option>
+                    {% endfor %}
+                </select>
+                <br/>
+                <label for="analysis">Select Analysis</label>
+                <select name="analysis" id="analysis">
+                    {% for process in process_list %}
+                        <option value="{{ process }}">{{ process }}</option>
+                    {% endfor %}
+                </select>
+                <br/>
+                <input type="submit" value="Run">
+            </form>
+        </div>
+        {% if data %}
+            <div class="column" style="width: 50%;">
+                <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+                <script type="text/javascript">
+                    google.charts.load("current", {packages:["corechart"]});
+                    google.charts.setOnLoadCallback(draw_chart);
+                    function draw_chart() {
+                        var data = google.visualization.arrayToDataTable([
+                            {% for key, value in data.items() %}
+                                {% if value is string %}
+                                    ['{{ key }}', '{{ value }}'],
+                                {% else %}
+                                    ['{{ key }}', {{ value }}],
+                                {% endif %}
+                            {% endfor %}
+                        ]);
+
+                        var options = {
+                            title: '{{ title }}',
+                            pieHole: 0.4,
+                            sliceVisibilityThreshold: 0.01
+                        };
+
+                        var chart = new google.visualization.PieChart(document.getElementById('piechart_3d'));
+                        chart.draw(data, options)
+                    }
+                </script>
+                <div style="margin: auto; width: 690px;">
+                    <div id="piechart_3d" style="width: 680px; height: 500px;"></div>
+                </div>
+            </div>
+        {% endif %}
+        {% if line_data %}
+            <div class="column" style="width: 50%;">
+                <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+                <script type="text/javascript">
+                    google.charts.load("current", {packages:["corechart"]});
+                    google.charts.setOnLoadCallback(draw_chart);
+                    function draw_chart() {
+                        var data = google.visualization.arrayToDataTable([
+                            ['Time', 'Coronavirus', 'Covid-19', 'Covid19'],
+                            ['2020/9/17 12:00', 2193, 1576, 1071],
+                            ['2020/9/17 13:00', 3346, 2754, 1739],
+                            ['2020/9/15 23:00', 1951, 1876, 2086]
+                        ]);
+
+                        <!-- data = google.visualization.arrayToDataTable({{ line_data }}) -->
+
+                        var options = {
+                            title: '{{ title }}',
+                            curveType: 'function',
+                            legend: { position: 'bottom' }
+                        };
+
+                        var chart = new google.visualization.LineChart(document.getElementById('curve_chart'));
+                        chart.draw(data, options)
+                    }
+                </script>
+                <div style="margin: auto; width: 690px;">
+                    <div id="curve_chart" style="width: auto; height: 500px;"></div>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+{% endblock %}
