@@ -7,15 +7,19 @@
 {% block content %}
     <form method="POST">
         <label for="keywords">Keywords</label>
-        <textarea name="keywords" id="keywords">{{ request.form['keywords'] }}</textarea>
+        <textarea name="keywords" id="keywords" placeholder="Enter OR Keywords">{{ request.form['keywords'] }}</textarea>
+        <label for="start_date">Start Date</label>
+        <input name="start_date" id="start_date" placeholder="start_date" value="{{ request.form['start_date'] }}">
         <label for="start_time">Start Time</label>
-        <input name="start_time" id="start_time" value="{{ request.form['start_time'] }}" required>
+        <input name="start_time" id="start_time" placeholder="15:10" value="{{ request.form['start_time'] }}" required>
         <label for="duration">Duration (in minutes)</label>
-        <input name="duration" id="duration" value="{{ request.form['duration'] }}" required>
+        <input name="duration" id="duration" placeholder="10" value="{{ request.form['duration'] }}" required>
+        <label for="directory">Directory</label>
+        <input name="directory" id="directory" placeholder="full/path/to/your/directory/" value="{{ request.form['directory'] }}" required>
         <label for="file_name">File Name</label>
-        <input name="file_name" id="file_name" value="{{ request.form['file_name'] }}">
+        <input name="file_name" id="file_name" placeholder="Data.txt" value="{{ request.form['file_name'] }}">
         <label for="summary_file_name">Summary File Name</label>
-        <input name="summary_file_name" id="summary_file_name" value="{{ request.form['summary_file_name'] }}">
+        <input name="summary_file_name" id="summary_file_name" placeholder="Summary.txt" value="{{ request.form['summary_file_name'] }}">
         <input type="submit" value="Start">
     </form>
 {% endblock %}
