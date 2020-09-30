@@ -107,7 +107,7 @@ from pprint import pprint
 
 client = MongoClient(port=27017)
 db = client['Coronavirus']
-collection = db['Mar_01']
+collection = db['test']
 
 total_tweets = collection.count()
 tweet_counter = 0
