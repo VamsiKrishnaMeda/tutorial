@@ -1,9 +1,9 @@
 import functools
-import time
 import itertools
 import re
 import threading
 import subprocess
+from datetime import datetime
 
 from pymongo import MongoClient
 
@@ -27,17 +27,54 @@ from flaskr.auth import login_required
 bp = Blueprint("twitter", __name__, url_prefix="/twitter")
 
 
-def run_tweet_collect(keywords, start_time, duration, file_name, summary_file_name):
-    """Starts a twitter collection with the given parameters and
-    restarts the collection if it's not running
+def run_tweet_collect(keywords: str, start_time: str, duration: str, data_filename: str, summary_filename: str) -> None:
     """
-    import time
-    from datetime import datetime, timedelta
+    Starts a twitter collection with the given parameters 
+    and restarts the collection if it gets interrupted
 
-    is_running = False
-    pid = 0
-    search_pid = ''
+    Parameters:
+    -----------
+    keywords: List of keywords on which tweets are be collected seperated by ' OR '
+    start_time: The start time for the collection
+    duration: Duration in minutes for for which tweets are to be collected
+    data_filename: Full path and filename for the Data file
+    summary_filename: Full path and filename for the Summary file
 
+    """
+    # MODIFIED ON 09/25/2020
+    start_time = datetime(datetime.now().year, datetime.now().month, datetime.now().day, int(start_time.split(':')[0]), int(start_time.split(':')[1]))
+    regex = r'\w*\.\w*'
+    pattern = re.compile(regex)
+    file_directory = pattern.sub('', data_filename)
+    faillog_filename = file_directory + 'FailLog.txt'
+    exit_code = None
+
+    while exit_code != 0:
+        with open(faillog_filename, 'a+') as log_file:
+            if exit_code is None:
+                # Starting the collection for the first time
+                log_file.write('Collection with Keywords: ' + keywords + ' started on: ' + str(start_time.date()) + '\n')
+                log_file.write('Start: ' + str(start_time.time()) + '\n')
+            else:
+                # Restarting the collection after an interruption
+                log_file.write('Restart: ' + str(datetime.now().time()))
+
+        # Calling RevisedTweetCollect.py as a subprocess
+        process = subprocess.Popen(['python', 'flaskr/static/collect/RevisedTweetCollect.py', keywords, data_filename, summary_filename, 'flaskr\static\KeySet1.txt', duration, str(start_time.hour), str(start_time.minute)])
+        # Wait for the subprocess to finish
+        process.wait()
+        exit_code = process.returncode
+
+        with open(faillog_filename, 'a+') as log_file:
+            if exit_code == 0:
+                # Completed collection
+                log_file.write('End: ' + str(datetime.now().time()) + '\n\n')
+            else:
+                # Collection failed
+                log_file.write('Fail: ' + str(datetime.now().time()) + '\n')
+
+    """
+    OLDER CODE
     # When you want to end the collection
     start_time = datetime(datetime.now().year, datetime.now().month, datetime.now().day, int(start_time.split(':')[0]), int(start_time.split(':')[1]))
     end_time = start_time + timedelta(minutes=int(duration))
@@ -57,6 +94,7 @@ def run_tweet_collect(keywords, start_time, duration, file_name, summary_file_na
         is_running = str(pid) in str(stdout)
         
         time.sleep(10)
+    """
 
 
 def run_query(collection_name, process_name):
@@ -235,8 +273,10 @@ def collect():
     """
     if request.method == 'POST':
         keywords = request.form['keywords']
+        start_date = request.form['start_date']
         start_time = request.form['start_time']
         duration = request.form['duration']
+        directory = request.form['directory']
         file_name = request.form['file_name']
         summary_file_name = request.form['summary_file_name']
         error = None

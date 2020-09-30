@@ -1,7 +1,7 @@
 """
 Author:         Tobel Atnafu, Parker Kain, Vamsi Krishna Meda
 Created On:     Feb 17, 2020
-Last Modified:  Feb 20, 2020
+Last Modified:  Sep 25, 2020
 Purpose:        Collect Tweets using tweepy
 Usage:          python TweetCollect.py "FIFA OR Ronaldo" rawTweetsFile.txt summaryFile.txt KeySet1.txt 2 17 43
 Usage:          python TweetCollect.py "FIFA OR Ronaldo" rawTweetsFile.txt summaryFile.txt KeySet1.txt 2 17 43 --date 02 10 2019
@@ -179,10 +179,10 @@ if __name__ == '__main__':
     args = setupCLI()
 
     searchFilter = args.filter
-    outputFile = 'C:\\Users\\bncmo\\Downloads\\' + str(args.output_file).split('.')[0]
+    outputFile = args.output_file.split('.')[0]
     times = datetime.datetime.now()
     hour = str(times.hour)
-    summaryFile = 'C:\\Users\\bncmo\\Downloads\\' + args.summary_file
+    summaryFile = args.summary_file
     keyFile = args.key_set_file
     duration = int(args.duration) + 1  # Run one minute past defined endtime
 
@@ -264,11 +264,3 @@ if __name__ == '__main__':
     else:
         print("\nStarting stream")
         stream.filter(track=searchFilter, is_async=True)
-
- # USE:
- # python TweetCollect.py "FIFA Ronaldo" rawTweetsFile.txt summaryFile.txt KeySet1.txt 2 17 43
- # above will run for 2 minutes beginning at 5:43 PM
- # OR
- # python TweetCollect.py "FIFA Ronaldo" rawTweetsFile.txt summaryFile.txt KeySet1.txt 2 17 43 --date 02 10 2019
- # multiple search term example:
- # python TweetCollect.py "dogs OR cats" rawTweetsFile.txt summaryFile.txt KeySet1.txt 2 17 43
