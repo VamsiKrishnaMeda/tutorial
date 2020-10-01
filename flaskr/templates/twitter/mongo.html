@@ -2,7 +2,61 @@
 
 {% block header %}
     <h1>{% block title %}Mongo Operations{% endblock %}</h1>
+    <meta name="vewport" content="width=device-width, initial-scale=1">
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        .column {
+            float: left;
+            width: 50%;
+            padding: 20px;
+        }
+        .row:after{
+            content: "";
+            display: table;
+            clear: both;
+        }
+    </style>
 {% endblock %}
 
 {% block content %}
+    <div class="row">
+        <div class="column">
+            <h2>Mongo Import</h2>
+            <form>
+                <!-- Directory to Import files -->
+                <label for="import_directory">Directory</label>
+                <input id="import_directory" name="import_directory" placeholder="full/path/to/folder/" value="{{ request.form['import_directory'] }}" required>
+                <!-- Name of MongoDB Databse -->
+                <label for="import_database">Database</label>
+                <input name="import_database" id="import_database" placeholder="Database Name" value="{{ request.form['import_database'] }}" required>
+                <!-- Name of the Collection -->
+                <label for="import_collection">Collection Name</label>
+                <input name="import_collection" id="import_collection" placeholder="Collection Name" value="{{ request.form['import_collection'] }}" required>
+                <br>
+                <div style="text-align: center;">
+                    <input style="margin: auto; font-size: 18px;" type="submit" name="mongo" value="Import">
+                </div>
+            </form>
+        </div>
+        <!-- <div class="column">
+            <h2>Keyword Adder</h2>
+            <form>
+                
+                <label for="keyword_database">Database Name</label>
+                <input name="keyword_database" id="keyword_database" placeholder="Database Name" value="{{ request.form['keyword_database'] }}" required>
+                
+                <label for="keyword_collection">Collection Name</label>
+                <input name="keyword_collection" id="keyword_collection" placeholder="Collection Name" value="{{ request.form['keyword_collection'] }}" required>
+                
+                <label for="keyword_keywords">Keywords</label>
+                <textarea name="keyword_keywords" id="keyword_keywords" placeholder="Ex: Enter OR Keywords" required>{{ request.form['keyword_keywords'] }}</textarea>
+                <br>
+                <div style="text-align: center;">
+                    <input style="margin: auto; font-size: 18px;" type="submit" name="mongo" value="Add Keywords">
+                </div>
+            </form>
+        </div> -->
+    </div>
 {% endblock %}

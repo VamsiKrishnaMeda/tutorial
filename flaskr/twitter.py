@@ -1,5 +1,3 @@
-import functools
-import itertools
 import re
 import threading
 import subprocess
@@ -10,15 +8,9 @@ from pymongo import MongoClient
 from flask import Blueprint
 from flask import flash
 from flask import g
-from flask import redirect
 from flask import render_template
 from flask import request
 from flask import session
-from flask import url_for
-from flask import Markup
-from flask import jsonify
-from werkzeug.security import check_password_hash
-from werkzeug.security import generate_password_hash
 
 from flaskr.db import get_db
 from flaskr.auth import login_required
@@ -27,7 +19,7 @@ from flaskr.auth import login_required
 bp = Blueprint("twitter", __name__, url_prefix="/twitter")
 
 
-def run_tweet_collect(keywords: str, start_time: str, duration: str, data_filename: str, summary_filename: str) -> None:
+def run_tweet_collect(keywords: str, start_date: str, start_time: str, duration: str, directory: str, data_filename: str, summary_filename: str) -> None:
     """
     Starts a twitter collection with the given parameters 
     and restarts the collection if it gets interrupted
@@ -35,43 +27,49 @@ def run_tweet_collect(keywords: str, start_time: str, duration: str, data_filena
     Parameters:
     -----------
     keywords: List of keywords on which tweets are be collected seperated by ' OR '
+    start_date: The start date for the collection
     start_time: The start time for the collection
     duration: Duration in minutes for for which tweets are to be collected
-    data_filename: Full path and filename for the Data file
-    summary_filename: Full path and filename for the Summary file
+    directory: Full path to store the data and summary files
+    data_filename: Filename for the Data file
+    summary_filename: Filename for the Summary file
 
     """
-    # MODIFIED ON 09/25/2020
-    start_time = datetime(datetime.now().year, datetime.now().month, datetime.now().day, int(start_time.split(':')[0]), int(start_time.split(':')[1]))
-    regex = r'\w*\.\w*'
-    pattern = re.compile(regex)
-    file_directory = pattern.sub('', data_filename)
-    faillog_filename = file_directory + 'FailLog.txt'
+    # MODIFIED ON 09/30/2020
+    # Coverting start_date into a datetime object
+    if start_date == '':
+        start_date = datetime.fromisoformat(str(datetime.now().date()))
+    else:
+        start_date = datetime.fromisoformat(start_date)
+    
+    # Setting start_time, faillog and exit_code
+    start_time = datetime(start_date.year, start_date.month, start_date.day, int(start_time.split(':')[0]), int(start_time.split(':')[1]))
+    faillog_filename = directory + 'FailLog.txt'
     exit_code = None
 
     while exit_code != 0:
-        with open(faillog_filename, 'a+') as log_file:
+        with open(faillog_filename, 'a+') as faillog:
             if exit_code is None:
                 # Starting the collection for the first time
-                log_file.write('Collection with Keywords: ' + keywords + ' started on: ' + str(start_time.date()) + '\n')
-                log_file.write('Start: ' + str(start_time.time()) + '\n')
+                faillog.write('Collection with Keywords: ' + keywords + ' started on: ' + str(start_time.date()) + '\n')
+                faillog.write('Start: ' + str(start_time.time()) + '\n')
             else:
                 # Restarting the collection after an interruption
-                log_file.write('Restart: ' + str(datetime.now().time()))
+                faillog.write('Restart: ' + str(datetime.now().time()))
 
         # Calling RevisedTweetCollect.py as a subprocess
-        process = subprocess.Popen(['python', 'flaskr/static/collect/RevisedTweetCollect.py', keywords, data_filename, summary_filename, 'flaskr\static\KeySet1.txt', duration, str(start_time.hour), str(start_time.minute)])
+        process = subprocess.Popen(['python', 'flaskr/static/collect/RevisedTweetCollect.py', keywords, directory + data_filename, directory + summary_filename, 'flaskr/static/KeySet1.txt', duration, str(start_time.hour), str(start_time.minute), '--date', str(start_time.month), str(start_time.day), str(start_time.year)])
         # Wait for the subprocess to finish
         process.wait()
         exit_code = process.returncode
 
-        with open(faillog_filename, 'a+') as log_file:
+        with open(faillog_filename, 'a+') as faillog:
             if exit_code == 0:
                 # Completed collection
-                log_file.write('End: ' + str(datetime.now().time()) + '\n\n')
+                faillog.write('End: ' + str(datetime.now().time()) + '\n\n')
             else:
                 # Collection failed
-                log_file.write('Fail: ' + str(datetime.now().time()) + '\n')
+                faillog.write('Fail: ' + str(datetime.now().time()) + '\n')
 
     """
     OLDER CODE
@@ -285,9 +283,11 @@ def collect():
             error = 'Enter a valid start time'
         elif duration in [None, '', ' ']:
             error = 'Enter a valid duration'
+        elif start_date != '' and datetime.fromisoformat(start_date).date() < datetime.now().date():
+            error = 'Enter a valid date'
         
         if error is None:
-            start_collection = threading.Thread(name='start_collection', target=run_tweet_collect, args=(keywords, start_time, duration, file_name, summary_file_name), daemon=True)
+            start_collection = threading.Thread(name='start_collection', target=run_tweet_collect, args=(keywords, start_date, start_time, duration, directory, file_name, summary_file_name), daemon=True)
             start_collection.start()
             flash('Collection Started')
             # run_tweet_collect(keywords, start_time, duration, file_name, summary_file_name)    
@@ -328,6 +328,17 @@ def mongo():
     Get input from user to run MongoDb operations
     """
     if request.method == 'POST':
-        username = request.form['username']
+        if request.form.post['mongo'] == 'Import':
+            import_directory = request.form['import_directory']
+            import_database = request.form['import_database']
+            import_collection = request.form['import_collection']
+            print('Import Request with {}, {}, {}'.format(import_directory, import_database, import_collection))
+            flash('Import Request with {}, {}, {}'.format(import_directory, import_database, import_collection))
+        elif request.form.post['mongo'] == 'Add Keywords':
+            keyword_database = request.form['keyword_database']
+            keyword_collection = request.form['keyword_collection']
+            keyword_keywords = request.form['keyword_keywords']
+            print('Add Keywords Request with {}, {}, {}'.format(keyword_database, keyword_collection, keyword_keywords))
+            flash('Add Keywords Request with {}, {}, {}'.format(keyword_database, keyword_collection, keyword_keywords))
     
     return render_template('twitter/mongo.html')

@@ -2,14 +2,49 @@
 
 {% block header %}
     <h1>{% block title %}Practice{% endblock %}</h1>
+    <style>
+        #loader {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            z-index: 1;
+            width: 150px;
+            height: 150px;
+            margin: -75px 0 0 -75px;
+            border: 16px solid #f3f3f3;
+            border-radius: 50%;
+            border-top: 16px solid #3498db;
+            width: 120px;
+            height: 120px;
+            -webkit-animation: spin 2s linear infinite;
+            animation: spin 2s linear infinite;
+        }
+        @-webkit-keyframes spin {
+            0% {-webkit-transform: rotate(0deg);}
+            100% {-webkit-transform: rotate(360deg);}
+        }
+        @keyframes spin {
+            0% {transform: rotateX(0deg);}
+            100% {transform: rotate(360deg);}
+        }
+    </style>
+    <script>
+        function show_loader() {
+            document.getElementById("loader").style.display = "block";
+            document.getElementById("practice_content").style.display = "none";
+        }
+    </script>
 {% endblock %}
 
 {% block content %}
-    <div class="row">
+    <div id="loader" style="display: none;"></div>
+    <div id="practice_content" class="row">
         <div class="column" style="width: 25%">
             <form method="POST">
+                <label for="date_practice">Date</label>
+                <input name="date_practice" id="date_practice" type="date" value="{{ request.form['date_practice'] }}">
                 <label for="submit">Start</label>
-                <input name="submit" id="submit" type="submit" value="Run">
+                <input name="submit" id="submit" type="submit" value="Run" onclick="show_loader()">
             </form>
         </div>
         {% if data %}
