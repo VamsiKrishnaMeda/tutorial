@@ -80,4 +80,38 @@
             </div>
         {% endif %}
     </div>
+    {% if practice_data %}
+        <div class="column" style="width: 50%;">
+            <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+            <script type="text/javascript">
+                google.charts.load("current", {packages:["corechart"]});
+                google.charts.setOnLoadCallback(draw_chart);
+                function draw_chart() {
+                    var data = google.visualization.arrayToDataTable([
+                        {% for item in practice_data %}
+                            {% if item[0] is string %}
+                                ['{{ item[0] }}', '{{ item[1] }}'],
+                            {% else %}
+                                ['{{ item[0] }}', {{ item[1] }}],
+                            {% endif %}
+                        {% endfor %}
+                    ]);
+
+                    var options = {
+                        title: 'Sentiment Analysis for Klobuchar',
+                        curveType: 'function',
+                        legend: { position: 'bottom' },
+                        width: 900,
+                        height: 500
+                    };
+
+                    var chart = new google.visualization.LineChart(document.getElementById('curve_chart'));
+                    chart.draw(data, options)
+                }
+            </script>
+            <div style="margin: auto; width: 690px;">
+                <div id="curve_chart" style="width: auto; height: 500px;"></div>
+            </div>
+        </div>
+    {% endif %}
 {% endblock %}

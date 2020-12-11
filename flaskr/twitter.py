@@ -1,4 +1,3 @@
-import re
 import threading
 import subprocess
 from datetime import datetime
@@ -96,6 +95,14 @@ def run_tweet_collect(keywords: str, start_date: str, start_time: str, duration:
 
 
 def run_query(collection_name, process_name):
+    """
+    Runs the requested Analysis query on MongoDb
+
+    Parameters:
+    -----------
+    collection_name: name of the collection in MongoDb database
+    process_name: name of the analysis to be run
+    """
     location_reference = {
         'US': 'United States',
         'MX': 'Mexico',
@@ -127,10 +134,12 @@ def run_query(collection_name, process_name):
         'ca': 'Catalan',
         'in': 'Indonesian'
     }
+    # Mongo Connection
     client = MongoClient(port=27017)
     db = client['Coronavirus']
     collection = db[collection_name]
 
+    # Language analysis query
     if process_name == 'Language':
         data = collection.aggregate([
             {
@@ -144,6 +153,7 @@ def run_query(collection_name, process_name):
             }
         ])
         language_data = list(data)
+        # Transforming the query result from list to dict
         data = {}
         data['Language'] = 'Count'
         for datum in language_data:
@@ -151,6 +161,7 @@ def run_query(collection_name, process_name):
                 data[language_reference[datum['_id']]] = datum['count']
             else:
                 data[datum['_id']] = datum['count']
+    # Location analysis query
     else:
         data = collection.aggregate([
             {
@@ -164,6 +175,7 @@ def run_query(collection_name, process_name):
             }
         ])
         location_data = list(data)
+        # Transforming the query result from list to dict
         data = {}
         data['Country'] = 'Count'
         for datum in location_data:
@@ -177,10 +189,19 @@ def run_query(collection_name, process_name):
 
 
 def keyword_analysis(collection_name):
+    """
+    Runs the Keyword analysis query on MongoDb
+
+    Parameters
+    -----------------
+    collection_name: name of the collection in MongoDb database
+    """
+    # Mongo connection
     client = MongoClient(port=27017)
     db = client['Coronavirus']
     collection = db[collection_name]
 
+    # Keywords analysis query for 'Coronavirus'
     data = collection.aggregate([
         {
             '$match': { 'filter_words': 'coronavirus' }
@@ -199,6 +220,7 @@ def keyword_analysis(collection_name):
     ])
     coronavirus_data = list(data)
 
+    # Keywords analysis query for 'covid-19'
     data = collection.aggregate([
         {
             '$match': { 'filter_words': 'covid-19' }
@@ -217,9 +239,10 @@ def keyword_analysis(collection_name):
     ])
     covid_data = list(data)
 
+    # Keywords analysis query for 'covid19'
     data = collection.aggregate([
         {
-            '$match': { 'filter_words': 'covid-19' }
+            '$match': { 'filter_words': 'covid19' }
         },
         {
             '$group': {
@@ -235,6 +258,7 @@ def keyword_analysis(collection_name):
     ])
     cov_data = list(data)
 
+    # Transforming the query results into a 2D array as required by Google Charts
     formatted_data = []
     formatted_data.append(['Time', 'Coronavirus', 'Covid-19'])
     for index in range(0, len(coronavirus_data)):

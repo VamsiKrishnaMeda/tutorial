@@ -1,36 +1,46 @@
-import time
-from pymongo import MongoClient
-from datetime import date, datetime
-from pprint import pprint
+# import time
+# from pymongo import MongoClient
+# from datetime import datetime
+# from pprint import pprint
 
-from flask import Flask
-from flask import Blueprint
-from flask import flash
-from flask import g
-from flask import redirect
-from flask import render_template
-from flask import request
-from flask import url_for
-from werkzeug.exceptions import abort
-from werkzeug.utils import secure_filename
+# from flask import Flask
+# from flask import Blueprint
+# from flask import flash
+# from flask import g
+# from flask import redirect
+# from flask import render_template
+# from flask import request
+# from flask import url_for
+# from werkzeug.exceptions import abort
+# from werkzeug.utils import secure_filename
 
-from flaskr.auth import login_required
-from flaskr.db import get_db
-
-
-bp = Blueprint('practice', __name__)
+# from flaskr.auth import login_required
+# from flaskr.db import get_db
 
 
-@bp.route('/practice', methods=['GET', 'POST'])
-@login_required
-def practice():
-    if request.method == 'POST':
-        date_practice = request.form['date_practice']
-        if date_practice != '' and datetime.fromisoformat(date_practice).date() < datetime.now().date():
-            flash('Enter a valid date')
-        time.sleep(100)
+# bp = Blueprint('practice', __name__)
 
-    return render_template('twitter/practice.html')          
+
+# @bp.route('/practice', methods=['GET', 'POST'])
+# #@login_required
+# def practice():
+#     if request.method == 'POST':
+#         print(request.data)
+
+#     return 'Hello'
+
+
+# def get_data():
+#     data = []
+#     with open('flaskr/static/Sentiment Analysis/Klobuchar.csv', 'r') as file:
+#         file.readline()
+#         data.append(['Time', 'Textblob'])
+#         for line in file:
+#             tokens = line.split(',')
+#             if int(tokens[0]) < 100:
+#                 data.append([int(tokens[0]), tokens[3]])
+
+#     return data        
 
         # client = MongoClient(port=27017)
         # db = client['Coronavirus']
@@ -133,3 +143,32 @@ def practice():
 #     tweet_counter += 1
 #     print("\r", end="")
 #     print("Current # of MongoDB tweet documents read out of", total_tweets, ":", tweet_counter, end="")
+
+
+path = '/Users/student/Documents/JavaScript/Angular/angular-material/src/assets/klobuchar-data.json'
+
+with open(path, 'a+') as target:
+    target.write('[')
+with open('flaskr/static/Sentiment Analysis/Klobuchar.csv', 'r') as input_file:
+    input_file.readline()
+    for line in input_file:
+        tokens = line.split(',')
+        if len(tokens) > 5:
+            with open(path, 'a+') as target:
+                target.write('[')
+                if tokens[3] != '':
+                    textblob = float(tokens[3])
+                else:
+                    textblob = ''
+                if tokens[4] != '':
+                    vader = float(tokens[4])
+                else:
+                    vader = ''
+                if tokens[5].split('\n')[0] != '':
+                    transformer = float(tokens[5].split('\n')[0])
+                else:
+                    transformer = ''
+                target.write('"{}",{},{},{}'.format(tokens[2], textblob, vader, transformer))
+                target.write('],')
+with open(path, 'a+') as target:
+    target.write(']')
