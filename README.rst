@@ -1,4 +1,4 @@
-Flaskr
+Twitter Research App
 ======
 
 The basic blog app built in the Flask `tutorial`_.
