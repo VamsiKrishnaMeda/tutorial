@@ -1,33 +1,37 @@
-# import time
-# from pymongo import MongoClient
-# from datetime import datetime
-# from pprint import pprint
+import json
+from pymongo import MongoClient
+from datetime import datetime
+from pprint import pprint
 
-# from flask import Flask
-# from flask import Blueprint
-# from flask import flash
-# from flask import g
-# from flask import redirect
-# from flask import render_template
-# from flask import request
-# from flask import url_for
-# from werkzeug.exceptions import abort
-# from werkzeug.utils import secure_filename
+from flask import Flask, jsonify
+from flask import Blueprint
+from flask import flash
+from flask import g
+from flask import redirect
+from flask import render_template
+from flask import request
+from flask import url_for
+from werkzeug.exceptions import abort
+from werkzeug.utils import secure_filename
 
-# from flaskr.auth import login_required
-# from flaskr.db import get_db
-
-
-# bp = Blueprint('practice', __name__)
+from flaskr.auth import login_required
+from flaskr.db import get_db
 
 
-# @bp.route('/practice', methods=['GET', 'POST'])
-# #@login_required
-# def practice():
-#     if request.method == 'POST':
-#         print(request.data)
+bp = Blueprint('practice', __name__)
 
-#     return 'Hello'
+
+@bp.route('/practice', methods=['GET', 'POST'])
+#@login_required
+def practice():
+    if request.method == 'POST':
+        # request_data = request.data.decode('utf-8')
+        data = json.loads(request.data)
+        print('Data: ', data)
+        # data = json.loads(request_data)
+        print('Type: ', type(data))
+
+    return 'Hello'
 
 
 # def get_data():
@@ -145,30 +149,30 @@
 #     print("Current # of MongoDB tweet documents read out of", total_tweets, ":", tweet_counter, end="")
 
 
-path = '/Users/student/Documents/JavaScript/Angular/angular-material/src/assets/klobuchar-data.json'
+# path = '/Users/student/Documents/JavaScript/Angular/angular-material/src/assets/warren-data.json'
 
-with open(path, 'a+') as target:
-    target.write('[')
-with open('flaskr/static/Sentiment Analysis/Klobuchar.csv', 'r') as input_file:
-    input_file.readline()
-    for line in input_file:
-        tokens = line.split(',')
-        if len(tokens) > 5:
-            with open(path, 'a+') as target:
-                target.write('[')
-                if tokens[3] != '':
-                    textblob = float(tokens[3])
-                else:
-                    textblob = ''
-                if tokens[4] != '':
-                    vader = float(tokens[4])
-                else:
-                    vader = ''
-                if tokens[5].split('\n')[0] != '':
-                    transformer = float(tokens[5].split('\n')[0])
-                else:
-                    transformer = ''
-                target.write('"{}",{},{},{}'.format(tokens[2], textblob, vader, transformer))
-                target.write('],')
-with open(path, 'a+') as target:
-    target.write(']')
+# with open(path, 'a+') as target:
+#     target.write('[')
+# with open('flaskr/static/Sentiment Analysis/Warren.csv', 'r') as input_file:
+#     input_file.readline()
+#     for line in input_file:
+#         tokens = line.split(',')
+#         if len(tokens) > 5:
+#             with open(path, 'a+') as target:
+#                 target.write('[')
+#                 if tokens[3] != '':
+#                     textblob = float(tokens[3])
+#                 else:
+#                     textblob = '""'
+#                 if tokens[4] != '':
+#                     vader = float(tokens[4])
+#                 else:
+#                     vader = '""'
+#                 if tokens[5].split('\n')[0] != '':
+#                     transformer = float(tokens[5].split('\n')[0])
+#                 else:
+#                     transformer = '""'
+#                 target.write('"{}",{},{},{}'.format(tokens[2], textblob, vader, transformer))
+#                 target.write('],')
+# with open(path, 'a+') as target:
+#     target.write(']')

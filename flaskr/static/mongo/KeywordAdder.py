@@ -110,7 +110,7 @@ def setupCLI():
     parser.add_argument('databaseName', type=str)
     parser.add_argument('collectionName', type=str)
     parser.add_argument('filterwords', type=str)
-    parser.add_argument("--server", type=str, help="l=local, v=VirtualMachine-3 (default)")
+    parser.add_argument("--server", type=str, help="l=local (default), v=VirtualMachine-3")
     args = parser.parse_args()
     dbName = args.databaseName
     collectionName = args.collectionName
@@ -122,7 +122,7 @@ def setupCLI():
         else:
             server = "vm3"
     else:
-        server = "vm3"
+        server = "local"
 
     collection = connectToMongo(dbName, collectionName, server)
 

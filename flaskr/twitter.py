@@ -1,9 +1,13 @@
 import threading
 import subprocess
 from datetime import datetime
+import json
+from os import listdir
+from os.path import isfile, join
 
 from pymongo import MongoClient
 
+from flask import jsonify
 from flask import Blueprint
 from flask import flash
 from flask import g
@@ -153,14 +157,16 @@ def run_query(collection_name, process_name):
             }
         ])
         language_data = list(data)
-        # Transforming the query result from list to dict
-        data = {}
-        data['Language'] = 'Count'
+        # Transforming the query result into a 2D array as required by Google Charts
+        data = []
+        data.append(['Language', 'Count'])
         for datum in language_data:
             if datum['_id'] in language_reference:
-                data[language_reference[datum['_id']]] = datum['count']
+                data.append([language_reference[datum['_id']], datum['count']])
+                # data[language_reference[datum['_id']]] = datum['count']
             else:
-                data[datum['_id']] = datum['count']
+                data.append([datum['_id'], datum['count']])
+                # data[datum['_id']] = datum['count']
     # Location analysis query
     else:
         data = collection.aggregate([
@@ -176,14 +182,16 @@ def run_query(collection_name, process_name):
         ])
         location_data = list(data)
         # Transforming the query result from list to dict
-        data = {}
-        data['Country'] = 'Count'
+        data = []
+        data.append(['Country', 'Count'])
         for datum in location_data:
             if datum['_id'] is not None:
                 if datum['_id'] in location_reference:
-                    data[location_reference[datum['_id']]] = datum['count']
+                    data.append([location_reference[datum['_id']], datum['count']])
+                    # data[location_reference[datum['_id']]] = datum['count']
                 else:
-                    data[datum['_id']] = datum['count']
+                    data.append([datum['_id'], datum['count']])
+                    # data[datum['_id']] = datum['count']
 
     return data
 
@@ -260,7 +268,7 @@ def keyword_analysis(collection_name):
 
     # Transforming the query results into a 2D array as required by Google Charts
     formatted_data = []
-    formatted_data.append(['Time', 'Coronavirus', 'Covid-19'])
+    formatted_data.append(['Time', 'Coronavirus', 'Covid-19', 'Covid19'])
     for index in range(0, len(coronavirus_data)):
         corona = coronavirus_data[index]
         covid = covid_data[index]
@@ -270,6 +278,23 @@ def keyword_analysis(collection_name):
         formatted_data.append([time, corona['count'], covid['count'], cov['count']])
 
     return formatted_data
+
+
+def mongo_import(directory, database_name, collection_name):
+    """
+    Imports all the files from the given directory to the specified
+    MongoDb database and collection
+
+    Parameters
+    ----------
+    directory: full directory path to the data files
+    database: name of the MongoDb database to import data to
+    collection: name of the MongoDb collection to import data to
+    """
+    files = [join(directory, filename) for filename in listdir(directory) if isfile(join(directory, filename))]
+    for file in files:
+        import_process = subprocess.Popen(['mongoimport', '--db', database_name, '--collection', collection_name, '--file', file])
+        import_process.wait()
 
 
 @bp.before_app_request
@@ -287,20 +312,21 @@ def load_logged_in_user():
 
 
 @bp.route('/collect', methods=['GET', 'POST'])
-@login_required
+# @login_required
 def collect():
     """Start a New Collection
 
     Get input from user and start the twitter collection
     """
     if request.method == 'POST':
-        keywords = request.form['keywords']
-        start_date = request.form['start_date']
-        start_time = request.form['start_time']
-        duration = request.form['duration']
-        directory = request.form['directory']
-        file_name = request.form['file_name']
-        summary_file_name = request.form['summary_file_name']
+        request_data = json.loads(request.data)
+        keywords = request_data['keywords']
+        start_date = request_data['startDate']
+        start_time = request_data['startTime']
+        duration = request_data['duration']
+        directory = request_data['directory']
+        file_name = request_data['filename']
+        summary_file_name = request_data['summaryFilename']
         error = None
 
         if start_time in [None, '', ' ']:
@@ -313,56 +339,67 @@ def collect():
         if error is None:
             start_collection = threading.Thread(name='start_collection', target=run_tweet_collect, args=(keywords, start_date, start_time, duration, directory, file_name, summary_file_name), daemon=True)
             start_collection.start()
-            flash('Collection Started')
+            return 'Success'
             # run_tweet_collect(keywords, start_time, duration, file_name, summary_file_name)    
         else:
-            flash(error)
+            return error
 
     return render_template('twitter/collect.html')
 
 
 @bp.route('/process', methods=['GET', 'POST'])
-@login_required
+# @login_required
 def process():
     """Run analysis on tweets
 
     Get input from user to process tweets
     """
     if request.method == 'POST':
-        collection_name = request.form['collection_name']
-        process_name = request.form['analysis']
+        request_data = json.loads(request.data)
+        collection_name = request_data['analyticsCollection']
+        process_name = request_data['analysis']
         title = collection_name + ' ' + process_name + ' Analysis'
         if 'Location' in title:
-            title += ' (Ignoring tweets without location data)'
+            title += ' (Ignoring tweets without location data)'    
         if process_name == 'Keyword':
-            line_data = keyword_analysis(collection_name)
-            return render_template('twitter/process.html', collection_list = ['practice', 'Mar_01', 'test'], process_list = ['Language', 'Location', 'Keyword'], title = title, line_data = line_data)
-        data = run_query(collection_name, process_name)
-        # data = {'Task' : 'Hours per Day', 'Work' : 11, 'Eat' : 2, 'Commute' : 2, 'Watching TV' : 2, 'Sleeping' : 7}
-        return render_template('twitter/process.html', collection_list = ['practice', 'Mar_01', 'test'], process_list = ['Language', 'Location', 'Keyword'], title = title, data = data)
+            data = keyword_analysis(collection_name)
+            column_names = ['Time', 'Coronavirus', 'Covid-19', 'Covid19']
+            options = {'width': 950, 'height': 500}
+            type = 'LineChart'
+            # return render_template('twitter/process.html', collection_list = ['practice', 'Mar_01', 'test'], process_list = ['Language', 'Location', 'Keyword'], title = title, line_data = line_data)
+        else:
+            data = run_query(collection_name, process_name)
+            if process_name == 'Location':
+                column_names = ['Location', 'Count']
+            else:
+                column_names = ['Language', 'Count']
+            options = {'pieHole': 0.4, 'sliceVisibilityThreshold': 0.02, 'width': 950, 'height': 500}
+            type = 'PieChart'
+
+        return jsonify({'title': title, 'type': type, 'data': data, 'columnNames': column_names, 'options': options})
+        # return render_template('twitter/process.html', collection_list = ['practice', 'Mar_01', 'test'], process_list = ['Language', 'Location', 'Keyword'], title = title, data = data)
     
     return render_template('twitter/process.html', collection_list = ['practice', 'Mar_01', 'test'], process_list = ['Language', 'Location', 'Keyword'])
 
 
 @bp.route('/mongo', methods=['GET', 'POST'])
-@login_required
+# @login_required
 def mongo():
     """Mongo operations
 
     Get input from user to run MongoDb operations
     """
     if request.method == 'POST':
-        if request.form.post['mongo'] == 'Import':
-            import_directory = request.form['import_directory']
-            import_database = request.form['import_database']
-            import_collection = request.form['import_collection']
-            print('Import Request with {}, {}, {}'.format(import_directory, import_database, import_collection))
-            flash('Import Request with {}, {}, {}'.format(import_directory, import_database, import_collection))
-        elif request.form.post['mongo'] == 'Add Keywords':
-            keyword_database = request.form['keyword_database']
-            keyword_collection = request.form['keyword_collection']
-            keyword_keywords = request.form['keyword_keywords']
-            print('Add Keywords Request with {}, {}, {}'.format(keyword_database, keyword_collection, keyword_keywords))
-            flash('Add Keywords Request with {}, {}, {}'.format(keyword_database, keyword_collection, keyword_keywords))
+        request_data = json.loads(request.data)
+        if request_data['process'] == 'import':
+            directory = request_data['directory']
+            database_name = request_data['database']
+            collection_name = request_data['collection']
+            mongo_import(directory, database_name, collection_name)
+        elif request_data['process'] == 'adder':
+            database = request.form['database']
+            collection = request.form['collection']
+            keywords = request.form['keywords']
+            subprocess.Popen(['python', 'flaskr/static/mongo/KeywordAdder.py', database, collection, keywords])
     
     return render_template('twitter/mongo.html')
