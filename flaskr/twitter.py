@@ -395,7 +395,8 @@ def mongo():
             directory = request_data['directory']
             database_name = request_data['database']
             collection_name = request_data['collection']
-            mongo_import(directory, database_name, collection_name)
+            start_import = threading.Thread(name='Mongo Import', target=mongo_import, args=(directory, database_name, collection_name), daemon=True)
+            start_import.start()
         elif request_data['process'] == 'adder':
             database = request.form['database']
             collection = request.form['collection']
